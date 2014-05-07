@@ -1,57 +1,97 @@
-var ctx, flag = false,
+var ctx,
+    flag = false,
     prevX = 0,
     currX = 0,
     prevY = 0,
-    currY = 0;
-
-var x = "black",
-    y = 2;
-
-var canvas;
-var onMove, onUp;
+    currY = 0,
+    x = "black",
+    y = 2,
+    onMove,
+    onUp,
+    doPoint,
+    doSquare,
+    doCircle;
 
 var onDown = function (e) {
     prevX = e.clientX - canvas.offset().left;
     prevY = e.clientY - canvas.offset().top;
 };
-var doPoint;
+
+/*
+ *  DRAW LINE
+ */
 var drawLine = function (e) {
     doPoint = true;
     prevX = e.clientX - canvas.offset().left;
     prevY = e.clientY - canvas.offset().top;
     var c = document.getElementById("mainCanvas");
     var ctx = c.getContext("2d");
-
+    ctx.beginPath();
     ctx.strokeStyle = x;
 }
+var moveLine = function (e) {
 
-var drawSmile = function (e) {
+    if (!flag)
+        return;
 
-    var c = document.getElementById("mainCanvas");
-    var ctx = c.getContext("2d");
-    if (flag) {
-        ctx.strokeStyle = x;
-        ctx.arc(prevX + 50, prevY + 55, (currY - prevY) + (currX - prevX), 0, (currY - prevY) + (currX - prevX) * Math.PI, false); // Face
-        ctx.moveTo(prevX + 75, prevY + 55);
-        ctx.arc(prevX + 50, prevY + 55, (currY - prevY) + (currX - prevX), 0, Math.PI, false);   // mouth
-        ctx.moveTo(prevX + 35, prevY + 45);
-        ctx.arc(prevX + 30, prevY, (currY - prevY) + (currX - prevX), 0, (currY - prevY) + (currX - prevX) * Math.PI, false);  // Left eye
-        ctx.moveTo(prevX + 75, prevY + 45);
-        ctx.arc(prevX + 70, prevY + 45, (currY - prevY) + (currX - prevX), 0, (currY - prevY) + (currX - prevX) * Math.PI, false);  // Right eye
-    }
+    doPoint = false;
+
+    currX = e.clientX - canvas.offset().left;
+    currY = e.clientY - canvas.offset().top;
+    ctx.strokeStyle = x;
+    ctx.moveTo(prevX, prevY);
+    ctx.lineTo(currX, currY);
+    ctx.stroke();
+
+    prevX = currX;
+    prevY = currY;
+
 }
+var stopLine = function (e) {
 
-var drawCircle = function (e) {
-    var c = document.getElementById("mainCanvas");
-    var ctx = c.getContext("2d");
-    if (flag) {
-        ctx.strokeStyle = x;
+    if (doPoint) {
+        currX = e.clientX - canvas.offset().left;
+        currY = e.clientY - canvas.offset().top;
         ctx.beginPath();
-        ctx['arc'].apply(ctx, [prevX, prevY, (currY - prevY) + (currX - prevX), 0, (currY - prevY) + (currX - prevX) * Math.PI]);
-        ctx.fillStyle = 'white';
+        ctx.fillStyle = x;
+        ctx.fillRect(currX, currY, 3, 3);
+        ctx.closePath();
     }
 }
 
+/*
+ * DRAW CIRCLE
+ */
+var drawCircle = function (e) {
+    doCircle = true;
+    prevX = e.clientX - canvas.offset().left;
+    prevY = e.clientY - canvas.offset().top;
+    var c = document.getElementById("mainCanvas");
+    var ctx = c.getContext("2d");
+    ctx.strokeStyle = x;
+    ctx.beginPath();
+
+
+}
+var redimCircle = function(e){
+    ctx['arc'].apply(ctx, [prevX, prevY, (currY - prevY) + (currX - prevX), 0, (currY - prevY) + (currX - prevX) * Math.PI]);
+    ctx.fillStyle = 'white';
+    ctx.stroke();
+}
+
+var stopCircle = function(e){
+    if(doCircle){
+        var c=document.getElementById("circle");
+        var ctx=c.getContext("2d");
+        ctx.beginPath();
+        ctx.arc(prevX+50,prevY+50,40,0,2*Math.PI);
+        ctx.stroke();
+    }
+}
+
+/*
+ * DRAW SQUARE
+ */
 var drawSquare = function (e) {
     var c = document.getElementById("mainCanvas");
     var ctx = c.getContext("2d");
@@ -74,40 +114,11 @@ var drawSquare = function (e) {
         //ctx.stroke();
     }
 }
-
-var moveLine = function (e) {
-
-    if (!flag)
-        return;
-
-    doPoint = false;
-
-    currX = e.clientX - canvas.offset().left;
-    currY = e.clientY - canvas.offset().top;
-
-    ctx.strokeStyle = x;
-    ctx.moveTo(prevX, prevY);
-    ctx.lineTo(currX, currY);
-    // ctx.fillRect(currX, currY, 2, 2);
-    ctx.stroke();
-
-
-    prevX = currX;
-    prevY = currY;
+var redimSquare = function(e){
 
 }
-
-var stopLine = function (e) {
-    if (doPoint) {
-        currX = e.clientX - canvas.offset().left;
-        currY = e.clientY - canvas.offset().top;
-        ctx.beginPath();
-        ctx.fillStyle = x;
-        ctx.fillRect(currX, currY, 1, 1);
-        ctx.closePath();
-    }
+var stopSquare = function (e) {
 }
-
 
 /*
  * Clear main canvas
@@ -157,6 +168,8 @@ function color(obj) {
  */
 function circle() {
     onDown = drawCircle;
+    onMove = redimCircle;
+    onUp = stopCircle;
 }
 
 /*
@@ -164,6 +177,8 @@ function circle() {
  */
 function square() {
     onDown = drawSquare;
+    onMove = redimSquare;
+    onUp = stopSquare;
 }
 
 /*
@@ -172,15 +187,7 @@ function square() {
 function line() {
     onDown = drawLine;
     onMove = moveLine;
-    onUp=stopLine;
-
-}
-
-/*
- * Draw smile
- */
-function smile() {
-    onDown = drawSmile;
+    onUp = stopLine;
 }
 
 $(function () {
@@ -193,27 +200,25 @@ $(function () {
     line();
 
     canvas.mousemove(function (e) {
-        onMove(e);
         document.getElementById("xMove").innerHTML = "x : " + currX;
         document.getElementById("yMove").innerHTML = "y : " + currY;
-    });
+        onMove(e);
 
+    });
     canvas.mousedown(function (e) {
         flag = true;
-        onDown(e);
         document.getElementById("xDown").innerHTML = "x : " + currX;
         document.getElementById("yDown").innerHTML = "y : " + currY;
+        onDown(e);
     });
-
-
     canvas.mouseup(function (e) {
-        flag = false;
-        onUp(e);
         document.getElementById("xUp").innerHTML = "x : " + currX;
         document.getElementById("yUp").innerHTML = "y : " + currY;
+        flag = false;
+        onUp(e);
     });
-
     canvas.mouseout(function (e) {
         flag = false;
     });
+
 });
