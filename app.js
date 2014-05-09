@@ -1,3 +1,11 @@
+// MongoDB config
+global.config = require("./config.js");
+global.my = require("./My.js");
+require("init.js")(function(){app.launch()});
+
+my.getService('')
+
+
 var express = require('express');
 var path = require('path');
 var favicon = require('static-favicon');
