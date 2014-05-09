@@ -1,7 +1,7 @@
 // MongoDB config
-global.config = require("./config.js");
-global.my = require("./My.js");
-global.begin = require("./init.js");
+global.config = require("./config/config.js");
+global.my = require("./config/My.js");
+global.begin = require("./config/init.js");
 global.userService = my.getService("user_service");
 
 begin.apply(function(){
