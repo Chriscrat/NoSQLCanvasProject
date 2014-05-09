@@ -1,9 +1,57 @@
 #!/usr/bin/env node
 var debug = require('debug')('my-application');
 var app = require('../app');
+var ArrayList = require('javascript.util').ArrayList;
 
 app.set('port', process.env.PORT || global.config["server"].port);
 
 var server = app.listen(app.get('port'), function() {
   debug('Express server listening on port ' + server.address().port);
+});
+
+var io = require ( "socket.io" ).listen (server);
+var i = 0, x = 0, y = 0, currX =0, currY = 0;
+var isDown = false;
+var model;
+var actionArray = new ArrayList();
+
+io.sockets.on ("connection" , function ( socket )
+{
+    socket.on('connect', function () {
+        i++;
+        console.log("Actuellement "+i+" utilisateur(s) connecté(s)");
+    });
+
+    socket.on('disconnect', function () {
+        i--;
+        console.log("Actuellement "+i+" utilisateur(s) connecté(s)");
+    });
+
+    socket.on('downCanvas', function (x, y, _model) {
+        console.log("Click souris émit");
+        currX = x;
+        currY = y;
+        model = _model;
+        actionArray.add([{'model':model,'x':x,'y':y}]);
+        isDown=true;
+    });
+
+    socket.on('moveCanvas', function  (x, y) {
+        if((currX != x && currY != y) && isDown){
+            console.log("L'utilisateur survole le canvas à la position x : "+x+" y : "+y);
+            actionArray.add([{'model':model,'x':x,'y':y}]);
+            }
+    });
+
+    socket.on('upCanvas', function (x, y) {
+        console.log("Click souris relaché");
+        actionArray.add([{'model':model,'x':x,'y':y}]);
+
+        var tab = [];
+        for(var i = 0; i < actionArray.size();i++)
+            tab.push(actionArray.get(i));
+
+        userService.insert(tab, "action", function(err){});
+        isDown=false;
+    });
 });

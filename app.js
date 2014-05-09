@@ -1,10 +1,12 @@
 // MongoDB config
 global.config = require("./config.js");
 global.my = require("./My.js");
-require("init.js")(function(){app.launch()});
+global.begin = require("./init.js");
+global.userService = my.getService("user_service");
 
-my.getService('')
-
+begin.apply(function(){
+    console.log("Error mongodb");
+});
 
 var express = require('express');
 var path = require('path');
@@ -65,6 +67,5 @@ app.use(function(err, req, res, next) {
         error: {}
     });
 });
-
 
 module.exports = app;

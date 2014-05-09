@@ -5,7 +5,7 @@ var config = {
         database:"canvas"
     },
     server:{
-        port: 3000
+        port: "3000"
     }
 };
 module.exports = config;
