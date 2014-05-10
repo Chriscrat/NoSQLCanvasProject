@@ -46,12 +46,13 @@ io.sockets.on ("connection" , function ( socket )
     socket.on('upCanvas', function (x, y) {
         console.log("Click souris relaché");
         actionArray.add([{'model':model,'x':x,'y':y}]);
-
+        actionArray.add([{'model':'end','x':-1,'y':-1}]);
         var tab = [];
         for(var i = 0; i < actionArray.size();i++)
-            tab.push(actionArray.get(i));
+            tab.push({'model':actionArray.get(i)[0].model,'x':actionArray.get(i)[0].x,'y':actionArray.get(i)[0].y});
 
         userService.insert(tab, "action", function(err){});
+
         isDown=false;
     });
 });
