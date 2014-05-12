@@ -1,6 +1,6 @@
 var MongoClient = require('mongodb');
 var async = require("async"),
-    init = function (callback) {
+    init = function () {
         async.series([
                 function (cb) {
                     MongoClient.connect("mongodb://" + global.config["mongo"].hostname + ":" + global.config["mongo"].port + "/" + global.config["mongo"].database, function (err, db) {
@@ -10,6 +10,24 @@ var async = require("async"),
                                 if (!err) {
                                     console.log("Create collection : created");
                                     global.mongoDb = db;
+                                    var collection =  db.collection("action");
+                                    var count=0;
+                                    collection.distinct('id',function(err, docs){
+                                        if(!err){
+                                            if(docs==undefined){
+                                                global.collectionLength = count;
+                                                cb();
+                                            }
+                                            else{
+                                                global.collectionLength = docs.length;
+                                                cb();
+                                            }
+                                        }
+                                        else
+                                        {
+                                            cb();
+                                        }
+                                    });
                                     cb();
                                 }
                                 else
@@ -17,6 +35,7 @@ var async = require("async"),
                             });
                         }
                         else
+                            console.log("MongoDB is offline")
                             cb();
                     });
                 }

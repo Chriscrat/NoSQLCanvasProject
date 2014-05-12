@@ -200,25 +200,18 @@ $(function () {
     line();
 
     canvas.mousemove(function (e) {
-        document.getElementById("xMove").innerHTML = "x : " + currX;
-        document.getElementById("yMove").innerHTML = "y : " + currY;
         onMove(e);
 
     });
     canvas.mousedown(function (e) {
         flag = true;
-        document.getElementById("xDown").innerHTML = "x : " + currX;
-        document.getElementById("yDown").innerHTML = "y : " + currY;
         onDown(e);
     });
     canvas.mouseup(function (e) {
-        document.getElementById("xUp").innerHTML = "x : " + currX;
-        document.getElementById("yUp").innerHTML = "y : " + currY;
         flag = false;
         onUp(e);
     });
     canvas.mouseout(function (e) {
         flag = false;
     });
-
 });

@@ -14,15 +14,15 @@ a {
 #canvasBlock{
     float:left;
     display: table-cell;
-    width:55%;
-    height:600px;
+    width:65%;
+    height:500px;
 }
 
 #canvasTool
 {
     float:right;
-    width : 40%;
-    height: 600px;
+    width : 30%;
+    height: 500px;
     border-left:2px solid black;
 }
 
@@ -55,4 +55,16 @@ a {
 
 #canvasTool canvas:hover{
     border-color:steelblue;
+}
+
+#nickname{
+    font-style: italic;
+    font-size:x-large;
+}
+
+#actions{
+    width:500px;
+    height:200px;
+    overflow-y:auto;
+    border-bottom: 1px solid black;
 }

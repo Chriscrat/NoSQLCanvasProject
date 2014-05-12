@@ -4,8 +4,8 @@ global.my = require("./My.js");
 global.begin = require("./init.js");
 global.userService = my.getService("\\services\\user_service");
 
-begin.apply(function(){
-    console.log("Error mongodb");
+begin.apply(function(err){
+    if(err)console.log("Error mongodb");
 });
 
 var express = require('express');
@@ -15,7 +15,6 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
-var routes = require('./routes/index');
 var users = require('./routes/users');
 var panel = require('./routes/panel');
 
@@ -33,7 +32,6 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 //Mapping routes
-app.use('/', routes);
 app.use('/users', users);
 app.use('/panel', panel);
 

@@ -1,11 +1,14 @@
 <% include header.ejs %>
     <body>
     <h1><%= title %></h1>
+    <div id="nickname"></div>
+    <div id="room"></div>
     <div id ="mainContainer">
             <div id="canvasBlock">
-                <canvas id="mainCanvas" width="800" height="600" style="top:2%;left:10%;border:2px solid;"></canvas>
+                <canvas id="mainCanvas" width="900" height="500" style="top:2%;left:10%;border:2px solid;"></canvas>
                 <script>
                     var model="dot";
+                    var colorCode="black";
                     $("#mainCanvas").on('mousedown',function(e){
                        socket.emit('downCanvas', e.pageX, e.pageY, model);
                     });
@@ -18,22 +21,23 @@
                         socket.emit('upCanvas', e.pageX, e.pageY);
                     });
 
+                    $("#nickname" ).html( "Welcome <span style='color:" + color + ";'>" + nickname + "</span>" );
+
+
+                    socket.on('leave', function(message) {
+                        $('#room').text(message);
+                    })
                 </script>
                 <br>
-                <input type="button" value="Clear" id="clr" size="23" onclick="erase()">
             </div>
             <div id="canvasTool">
-                <p>Positions :</p>
-                On down
-                <div id="xDown">x:</div>
-                <div id="yDown">y:</div>
-                On move
-                <div id="xMove">x:</div>
-                <div id="yMove">y:</div>
-                On up
-                <div id="xUp">x:</div>
-                <div id="yUp">y:</div>
-                <hr>
+                <p>Actions</p>
+                <div id="actions"></div>
+                <script>
+                    socket.on('actions', function(actions) {
+                        $('#actions').append(actions);
+                    })
+                </script>
                 <p>Colors :</p>
                 <div style="background:green;" class="colorBlock" id="green" onclick="color(this)"></div>
                 <div style="background:blue;" class="colorBlock" id="blue" onclick="color(this)"></div>
@@ -42,6 +46,11 @@
                 <div style="background:orange;" class="colorBlock" id="orange" onclick="color(this)"></div>
                 <div style="background:black;" class="colorBlock" id="black" onclick="color(this)"></div>
                 <div style="background:white;" class="colorBlock" id="white" onclick="color(this)"></div>
+                <script>
+                    $(".colorBlock").click(function() {
+                        socket.emit('changeColor', this.id);
+                    }
+                </script>
                 <br><br>
                 <hr>
                 <p>Models :</p>
