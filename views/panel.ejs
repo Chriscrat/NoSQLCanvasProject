@@ -14,9 +14,11 @@
                     var prevX, prevY, currX, currY;
                     var model ="dot";
                     var doPoint;
+                    var flag = false;
 
                     socket.on('beginDraw',function(_model, _color, _x, _y){
                         doPoint = true;
+                        flag=true;
                         prevX = _x;
                         prevY = _y;
                         ctx.beginPath();
@@ -25,12 +27,16 @@
 
                     socket.on('moveDraw',function(_model, _color, _x, _y){
                         doPoint = false;
-                        currX = _x;
-                        currY = _y;
-                        ctx.strokeStyle = _color;
-                        //ctx.moveTo(prevX, prevY);
-                        ctx.lineTo(currX, currY);
-                        ctx.stroke();
+
+                        if(flag){
+                            currX = _x;
+                            currY = _y;
+                            ctx.strokeStyle = _color;
+                            //ctx.moveTo(prevX, prevY);
+                            ctx.lineTo(currX, currY);
+                            ctx.stroke();
+                        }
+
                     });
 
                     socket.on('endDraw',function(_model, _color, _x, _y) {
@@ -41,10 +47,11 @@
                             ctx.fillRect(currX, currY, 3, 3);
                             ctx.closePath();
                         }
+                        flag=false;
                     });
 
                     $("#mainCanvas").on('mousedown',function(e){
-                       socket.emit('downCanvas', e.pageX, e.pageY, model);
+                        socket.emit('downCanvas', e.pageX, e.pageY, model);
                        socket.emit("broadcastBeginDraw", model, colorCode , e.pageX, e.pageY);
                     });
 
