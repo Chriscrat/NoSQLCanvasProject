@@ -2,47 +2,58 @@
 var debug = require('debug')('my-application');
 var app = require('../app');
 var ArrayList = require('javascript.util').ArrayList;
-var Canvas = require('node-gyp');
+//var Canvas = require('node-gyp');
 
 app.set('port', process.env.PORT || global.config["server"].port);
 
 var server = app.listen(app.get('port'), function() {
   debug('Express server listening on port ' + server.address().port);
 });
-
 var io = require ( "socket.io" ).listen (server);
+
 var i = 0, currX =0, currY = 0, countDrawing;
 var isDown = false;
 var model, nickname, pseudoColor, colorDraw="black";
 var actionArray = new ArrayList();
 
-
 io.sockets.on ("connection" , function ( socket )
 {
-
     socket.on('connect', function () {
         i++;
-
         socket.get('nickname', function (error, _nickname) {
             nickname = _nickname;
         });
 
+        userService.getCountDrawing("action", function (error, count){
+            countDrawing =  global.collectionLength;
+            console.log("There are currently "+ countDrawing+" draws");
+        });
+
         socket.set('colorDraw', colorDraw);
-        console.log(i+" users connected");
         socket.broadcast.emit("roomInfo",nickname+" joins the room. Currently, "+ i+" users are in the drawing room.");
         socket.emit("roomInfo"," Currently, "+ i+" users are in the drawing room.");
 
-        countDrawing = global.collectionLength;
-
-        console.log(countDrawing + " existed drawning into mongodb");
-
+        var begin;
+        var last=0;
         for(var j=0;j<countDrawing;j++){
             userService.getCollectionContentById("action", j, function(err){
                 if(!err)
-                    global.content;
+                {
+                    begin = true;
+                    for(var x=0;x<global.content.length;x++){
+                        if(begin){
+                            socket.emit("beginDraw", global.content[x].model, global.content[x].color, global.content[x].x, global.content[x].y);
+                            begin=false;
+                        }
+                        else{
+                            socket.emit("moveDraw", global.content[x].model, global.content[x].color, global.content[x].x, global.content[x].y);
+                        }
+                        last = x;
+                    }
+                    socket.emit("endDraw", global.content[last].model, global.content[last].color, global.content[last].x, global.content[last].y);
+                }
             });
         }
-
     });
 
     socket.on('defineNickname', function(_nickname, _color){
@@ -62,11 +73,11 @@ io.sockets.on ("connection" , function ( socket )
     });
 
     socket.on('changeColor', function (_colorDraw) {
-        socket.set('colorDraw', _colorDraw);
+        colorDraw = _colorDraw;
     });
 
-
     socket.on('downCanvas', function (x, y, _model) {
+        actionArray= new ArrayList();
         socket.get('color', function (error, _color) {
             pseudoColor = _color;
         });
@@ -77,41 +88,51 @@ io.sockets.on ("connection" , function ( socket )
         socket.emit("actions","<font color='"+pseudoColor+"'>You started a "+_model+"</font><br>");
         socket.broadcast.emit("actions","<font color='"+pseudoColor+"'>"+_model+" started by "+nickname+"</font><br>");
 
-        console.log("Click down");
+        //console.log("Click down");
         currX = x;
         currY = y;
         model = _model;
 
-        socket.get('color', function (error, _colorDraw) {
-            colorDraw = _colorDraw;
-        });
-
-        countDrawing = global.collectionLength;
-
         actionArray.add([{'id':countDrawing,'drawer':nickname,'model':model,'color':colorDraw,'x':x,'y':y}]);
         isDown=true;
-        countDrawing++;
-
     });
 
     socket.on('moveCanvas', function  (x, y) {
         if((currX != x && currY != y) && isDown){
-            console.log("Mouse move on x : "+x+" y : "+y);
+            //console.log("Mouse move on x : "+x+" y : "+y);
             actionArray.add([{'id':countDrawing,'drawer':nickname,'model':model,'color':colorDraw,'x':x,'y':y}]);
             }
     });
 
     socket.on('upCanvas', function (x, y) {
-        console.log("Click up");
+        //console.log("Click up");
         socket.emit("actions","<font color='"+pseudoColor+"'>Finish</font><hr>");
         socket.broadcast.emit("actions","<font color='"+pseudoColor+"'>"+nickname+" made modifications</font><hr>");
         actionArray.add([{'id':countDrawing,'drawer':nickname,'model':model,'color':colorDraw,'x':x,'y':y}]);
 
         var tab = [];
-        for(var i = 0; i < actionArray.size();i++)
+        for(var i = 0; i < actionArray.size();i++){
             tab.push({'id':actionArray.get(i)[0].id,'drawer':actionArray.get(i)[0].drawer,'model':actionArray.get(i)[0].model,'color':actionArray.get(i)[0].color,'x':actionArray.get(i)[0].x,'y':actionArray.get(i)[0].y});
+            //console.log("Id : "+actionArray.get(i)[0].id+ " - Drawer : "+actionArray.get(i)[0].drawer+" - Model : "+actionArray.get(i)[0].model+" - Color : "+actionArray.get(i)[0].color);
+        }
 
         userService.insert(tab, "action", function(err){});
         isDown=false;
+
+        //console.log("There are now "+(countDrawing+1)+" draws in DB");
+        countDrawing++;
+    });
+
+    socket.on('broadcastBeginDraw', function  (_model, _color, _x, _y) {
+        socket.broadcast.emit("beginDraw", _model, _color, _x, _y);
+
+    });
+
+    socket.on('broadcastMoveDraw', function  (_model, _color, _x, _y) {
+        socket.broadcast.emit("moveDraw", _model, _color, _x, _y);
+    });
+
+    socket.on('broadcastEndDraw', function  (_model, _color, _x, _y) {
+        socket.broadcast.emit("endDraw", _model, _color, _x, _y);
     });
 });

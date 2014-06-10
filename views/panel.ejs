@@ -6,19 +6,56 @@
     <div id ="mainContainer">
             <div id="canvasBlock">
                 <canvas id="mainCanvas" width="900" height="500" style="top:2%;left:10%;border:2px solid;"></canvas>
+                <article><!-- our canvas will be inserted here--></article>
                 <script>
-                    var model="dot";
                     var colorCode="black";
+                    var c = document.getElementById("mainCanvas");
+                    var ctx = c.getContext("2d");
+                    var prevX, prevY, currX, currY;
+                    var model ="dot";
+                    var doPoint;
+
+                    socket.on('beginDraw',function(_model, _color, _x, _y){
+                        doPoint = true;
+                        prevX = _x;
+                        prevY = _y;
+                        ctx.beginPath();
+                        ctx.strokeStyle = _color;
+                    });
+
+                    socket.on('moveDraw',function(_model, _color, _x, _y){
+                        doPoint = false;
+                        currX = _x;
+                        currY = _y;
+                        ctx.strokeStyle = _color;
+                        //ctx.moveTo(prevX, prevY);
+                        ctx.lineTo(currX, currY);
+                        ctx.stroke();
+                    });
+
+                    socket.on('endDraw',function(_model, _color, _x, _y) {
+                        if(doPoint){
+                            currX = _x;
+                            currY = _y;
+                            ctx.fillStyle = _color;
+                            ctx.fillRect(currX, currY, 3, 3);
+                            ctx.closePath();
+                        }
+                    });
+
                     $("#mainCanvas").on('mousedown',function(e){
                        socket.emit('downCanvas', e.pageX, e.pageY, model);
+                       socket.emit("broadcastBeginDraw", model, colorCode , e.pageX, e.pageY);
                     });
 
                     $('#mainCanvas').on('mousemove', function(e){
                         socket.emit('moveCanvas', e.pageX, e.pageY);
+                        socket.emit("broadcastMoveDraw", model, colorCode , e.pageX, e.pageY);
                     });
 
                     $('#mainCanvas').on('mouseup', function(e){
                         socket.emit('upCanvas', e.pageX, e.pageY);
+                        socket.emit("broadcastEndDraw", model, colorCode , e.pageX, e.pageY);
                     });
 
                     $("#nickname" ).html( "Welcome <span style='color:" + color + ";'>" + nickname + "</span>" );
@@ -39,17 +76,18 @@
                     })
                 </script>
                 <p>Colors :</p>
-                <div style="background:green;" class="colorBlock" id="green" onclick="color(this)"></div>
-                <div style="background:blue;" class="colorBlock" id="blue" onclick="color(this)"></div>
-                <div style="background:red;" class="colorBlock" id="red" onclick="color(this)"></div>
-                <div style="background:yellow;" class="colorBlock" id="yellow" onclick="color(this)"></div>
-                <div style="background:orange;" class="colorBlock" id="orange" onclick="color(this)"></div>
-                <div style="background:black;" class="colorBlock" id="black" onclick="color(this)"></div>
-                <div style="background:white;" class="colorBlock" id="white" onclick="color(this)"></div>
+                <div style="background:green;" class="colorBlock" id="green"></div>
+                <div style="background:blue;" class="colorBlock" id="blue"></div>
+                <div style="background:red;" class="colorBlock" id="red"></div>
+                <div style="background:yellow;" class="colorBlock" id="yellow"></div>
+                <div style="background:orange;" class="colorBlock" id="orange"></div>
+                <div style="background:black;" class="colorBlock" id="black"></div>
+                <div style="background:white;" class="colorBlock" id="white"></div>
                 <script>
-                    $(".colorBlock").click(function() {
-                        socket.emit('changeColor', this.id);
-                    }
+                    $(".colorBlock").on('click', function(){
+                        colorCode = this.id;
+                        socket.emit("changeColor", this.id);
+                    });
                 </script>
                 <br><br>
                 <hr>
@@ -62,7 +100,7 @@
                     ctx.arc(50,50,3,0,2*Math.PI);
                     ctx.stroke();
 
-                    $("#mainCanvas").on('click', function(){
+                    $("#dot").on('click', function(){
                         model="dot";
                     });
 
@@ -77,7 +115,7 @@
                     ctx.arc(50,50,40,0,2*Math.PI);
                     ctx.stroke();
 
-                    $("#mainCanvas").on('click', function(){
+                    $("#circle").on('click', function(){
                         model="circle";
                     });
                 </script>
@@ -93,11 +131,10 @@
                     ctx.lineWidth = 1;
                     ctx.stroke();
 
-                    $("#mainCanvas").on('click', function(){
+                    $("#square").on('click', function(){
                         model="square";
                     });
                 </script>
-
             </div>
         </div>
     </body>
